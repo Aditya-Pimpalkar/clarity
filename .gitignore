@@ -1,0 +1,221 @@
+# ==============================================================================
+# LLM Observability Platform - .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Operating System Files
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ------------------------------------------------------------------------------
+# IDEs and Editors
+# ------------------------------------------------------------------------------
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs (IntelliJ, GoLand, WebStorm)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------------------------
+# Environment Variables and Secrets
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+# API Keys and Credentials
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.json
+secrets.yaml
+
+# ------------------------------------------------------------------------------
+# Dependencies and Packages
+# ------------------------------------------------------------------------------
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+.pnp.*
+
+# Go
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+*.egg
+MANIFEST
+
+# Python virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# ------------------------------------------------------------------------------
+# Build Outputs and Artifacts
+# ------------------------------------------------------------------------------
+# General
+dist/
+build/
+out/
+target/
+bin/
+*.o
+*.a
+
+# Frontend builds
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+
+# Go binaries
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# ------------------------------------------------------------------------------
+# Testing and Coverage
+# ------------------------------------------------------------------------------
+# Test coverage
+coverage/
+*.coverprofile
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# ------------------------------------------------------------------------------
+# Logs
+# ------------------------------------------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# Databases
+# ------------------------------------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+*.rdb
+
+# ------------------------------------------------------------------------------
+# Docker
+# ------------------------------------------------------------------------------
+.docker/
+docker-compose.override.yml
+
+# ------------------------------------------------------------------------------
+# Terraform
+# ------------------------------------------------------------------------------
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ------------------------------------------------------------------------------
+# Kubernetes
+# ------------------------------------------------------------------------------
+*.kubeconfig
+kubeconfig
+
+# ------------------------------------------------------------------------------
+# Temporary Files
+# ------------------------------------------------------------------------------
+*.tmp
+*.temp
+*.swp
+*.bak
+*.cache
+tmp/
+temp/
+
+# ------------------------------------------------------------------------------
+# Cloud Provider CLI
+# ------------------------------------------------------------------------------
+.aws/
+.azure/
+.gcloud/
+
+# ------------------------------------------------------------------------------
+# Miscellaneous
+# ------------------------------------------------------------------------------
+.git-credentials
+.netrc
