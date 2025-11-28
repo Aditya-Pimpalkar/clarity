@@ -1,9 +1,27 @@
+# ==============================================================================
 # EditorConfig - Coding Style Definitions
 # https://editorconfig.org
+# ==============================================================================
+# EditorConfig helps maintain consistent coding styles for multiple developers
+# working on the same project across various editors and IDEs.
+#
+# This file defines coding styles for:
+# - Go (backend)
+# - JavaScript/TypeScript (frontend)
+# - Python (SDK)
+# - Configuration files (YAML, JSON, etc.)
+# - Documentation (Markdown)
+# - Shell scripts
+#
+# Most modern editors support EditorConfig either natively or via plugins.
+# ==============================================================================
 
+# This is the top-most EditorConfig file
 root = true
 
+# ==============================================================================
 # Default settings for all files
+# ==============================================================================
 [*]
 charset = utf-8
 end_of_line = lf
@@ -12,23 +30,73 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
-# Go files
+# ==============================================================================
+# Backend - Go files
+# ==============================================================================
 [*.go]
 indent_style = tab
 indent_size = 4
+max_line_length = 120
 
-# Python files
+# Go test files
+[*_test.go]
+indent_style = tab
+indent_size = 4
+
+# ==============================================================================
+# Frontend - JavaScript and TypeScript
+# ==============================================================================
+[*.{js,jsx,mjs,cjs}]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+quote_type = single
+
+[*.{ts,tsx}]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+quote_type = single
+
+# ==============================================================================
+# SDK - Python files
+# ==============================================================================
 [*.py]
 indent_style = space
 indent_size = 4
+max_line_length = 88
+trim_trailing_whitespace = true
 
-# JavaScript/TypeScript
-[*.{js,jsx,ts,tsx}]
+# Python test files
+[test_*.py]
 indent_style = space
-indent_size = 2
+indent_size = 4
+
+[*_test.py]
+indent_style = space
+indent_size = 4
+
+# ==============================================================================
+# Configuration Files
+# ==============================================================================
 
 # JSON files
 [*.json]
+indent_style = space
+indent_size = 2
+
+# JSON with comments (VS Code settings, etc.)
+[*.jsonc]
+indent_style = space
+indent_size = 2
+
+# package.json - special formatting
+[package.json]
+indent_style = space
+indent_size = 2
+
+# tsconfig.json
+[tsconfig*.json]
 indent_style = space
 indent_size = 2
 
@@ -37,15 +105,384 @@ indent_size = 2
 indent_style = space
 indent_size = 2
 
+# docker-compose files
+[docker-compose*.yml]
+indent_style = space
+indent_size = 2
+
+# Kubernetes manifests
+[*.{yaml,yml}]
+indent_style = space
+indent_size = 2
+
+# TOML files (Rust, Python poetry, etc.)
+[*.toml]
+indent_style = space
+indent_size = 2
+
+# INI files
+[*.ini]
+indent_style = space
+indent_size = 2
+
+[*.{conf,config}]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# Documentation
+# ==============================================================================
+
 # Markdown files
 [*.md]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+max_line_length = off
+
+# README files
+[README*.md]
 trim_trailing_whitespace = false
 
-# Makefile
+# Changelog
+[CHANGELOG.md]
+trim_trailing_whitespace = false
+
+# reStructuredText (Python docs)
+[*.rst]
+indent_style = space
+indent_size = 3
+max_line_length = 80
+
+# ==============================================================================
+# Build and Task Files
+# ==============================================================================
+
+# Makefile (must use tabs!)
 [Makefile]
 indent_style = tab
+indent_size = 4
 
-# Shell scripts
+[GNUmakefile]
+indent_style = tab
+indent_size = 4
+
+[*.mk]
+indent_style = tab
+indent_size = 4
+
+# ==============================================================================
+# Shell Scripts
+# ==============================================================================
 [*.sh]
 indent_style = space
 indent_size = 2
+end_of_line = lf
+
+[*.bash]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+[*.zsh]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+# ==============================================================================
+# Web Files
+# ==============================================================================
+
+# HTML
+[*.html]
+indent_style = space
+indent_size = 2
+max_line_length = 120
+
+# CSS
+[*.css]
+indent_style = space
+indent_size = 2
+max_line_length = 120
+
+# SCSS/Sass
+[*.{scss,sass}]
+indent_style = space
+indent_size = 2
+
+# Less
+[*.less]
+indent_style = space
+indent_size = 2
+
+# Stylus
+[*.styl]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# Data Files
+# ==============================================================================
+
+# SQL
+[*.sql]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+# XML
+[*.xml]
+indent_style = space
+indent_size = 2
+
+# GraphQL
+[*.{graphql,gql}]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# Docker Files
+# ==============================================================================
+[Dockerfile]
+indent_style = space
+indent_size = 2
+
+[Dockerfile.*]
+indent_style = space
+indent_size = 2
+
+[*.dockerfile]
+indent_style = space
+indent_size = 2
+
+# Docker ignore
+[.dockerignore]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# Git Files
+# ==============================================================================
+[.gitignore]
+indent_style = space
+indent_size = 2
+
+[.gitattributes]
+indent_style = space
+indent_size = 2
+
+[.gitmodules]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# CI/CD Configuration
+# ==============================================================================
+
+# GitHub Actions
+[.github/workflows/*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# GitLab CI
+[.gitlab-ci.yml]
+indent_style = space
+indent_size = 2
+
+# Travis CI
+[.travis.yml]
+indent_style = space
+indent_size = 2
+
+# CircleCI
+[.circleci/config.yml]
+indent_style = space
+indent_size = 2
+
+# Jenkins
+[Jenkinsfile]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# Terraform
+# ==============================================================================
+[*.tf]
+indent_style = space
+indent_size = 2
+
+[*.tfvars]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# Other Configuration Files
+# ==============================================================================
+
+# EditorConfig itself
+[.editorconfig]
+indent_style = space
+indent_size = 2
+
+# Environment files
+[.env*]
+indent_style = space
+indent_size = 2
+insert_final_newline = false
+
+# Prettier
+[.prettierrc]
+indent_style = space
+indent_size = 2
+
+# ESLint
+[.eslintrc*]
+indent_style = space
+indent_size = 2
+
+# Babel
+[.babelrc]
+indent_style = space
+indent_size = 2
+
+[babel.config.*]
+indent_style = space
+indent_size = 2
+
+# TypeScript
+[tsconfig.json]
+indent_style = space
+indent_size = 2
+
+# Webpack
+[webpack.config.*]
+indent_style = space
+indent_size = 2
+
+# Rollup
+[rollup.config.*]
+indent_style = space
+indent_size = 2
+
+# Vite
+[vite.config.*]
+indent_style = space
+indent_size = 2
+
+# Jest
+[jest.config.*]
+indent_style = space
+indent_size = 2
+
+# Python setup
+[setup.py]
+indent_style = space
+indent_size = 4
+
+[setup.cfg]
+indent_style = space
+indent_size = 4
+
+# Python requirements
+[requirements*.txt]
+indent_style = space
+indent_size = 2
+
+# Python tox
+[tox.ini]
+indent_style = space
+indent_size = 4
+
+# Python pytest
+[pytest.ini]
+indent_style = space
+indent_size = 4
+
+[.pytest.ini]
+indent_style = space
+indent_size = 4
+
+# Python mypy
+[mypy.ini]
+indent_style = space
+indent_size = 4
+
+[.mypy.ini]
+indent_style = space
+indent_size = 4
+
+# Python pylint
+[.pylintrc]
+indent_style = space
+indent_size = 4
+
+# Python black
+[.black]
+indent_style = space
+indent_size = 4
+
+# Python flake8
+[.flake8]
+indent_style = space
+indent_size = 4
+
+# Python isort
+[.isort.cfg]
+indent_style = space
+indent_size = 4
+
+# ==============================================================================
+# License and Legal Files
+# ==============================================================================
+[LICENSE*]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+
+[NOTICE*]
+indent_style = space
+indent_size = 2
+
+[COPYING*]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# Changelog and Contributing
+# ==============================================================================
+[CHANGELOG*]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+
+[CONTRIBUTING*]
+indent_style = space
+indent_size = 2
+
+[CODE_OF_CONDUCT*]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# Other Common Files
+# ==============================================================================
+[AUTHORS*]
+indent_style = space
+indent_size = 2
+
+[CONTRIBUTORS*]
+indent_style = space
+indent_size = 2
+
+[MAINTAINERS*]
+indent_style = space
+indent_size = 2
+
+# ==============================================================================
+# END OF .editorconfig
+# ==============================================================================
+# Notes:
+# - Some editors may require a plugin to support EditorConfig
+# - Settings are applied in order, with later sections overriding earlier ones
+# - Not all properties are supported by all editors
+# - See https://editorconfig.org for full documentation
