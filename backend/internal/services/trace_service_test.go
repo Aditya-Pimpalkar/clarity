@@ -46,7 +46,7 @@ func (m *mockRepository) SaveSpan(ctx context.Context, span *models.Span) error 
 	return nil
 }
 
-func (m *mockRepository) GetSpansByTraceID(ctx context.Context, traceID string) ([]*models.Span, error) {
+func (m *mockRepository) GetSpansByTraceID(ctx context.Context, traceID string) ([]models.Span, error) {
 	return nil, nil
 }
 
@@ -257,7 +257,7 @@ func TestCalculateCost(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cost := service.calculateCost(tt.model, tt.provider, tt.promptTokens, tt.completionTokens)
-			
+
 			// Allow small floating point differences
 			if cost < tt.wantCost*0.99 || cost > tt.wantCost*1.01 {
 				t.Errorf("calculateCost() = %v, want %v", cost, tt.wantCost)

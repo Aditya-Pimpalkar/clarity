@@ -160,6 +160,65 @@ func (s *AnalyticsService) generateInsights(
 		})
 	}
 
+	// Insight 6: Model usage patterns
+	if len(modelUsage) > 0 {
+		// Find the most used model
+		mostUsed := modelUsage[0]
+		for _, usage := range modelUsage {
+			if usage.CallCount > mostUsed.CallCount {
+				mostUsed = usage
+			}
+		}
+
+		if mostUsed.CallCount > 100 {
+			insights = append(insights, Insight{
+				Type:        "info",
+				Category:    "usage",
+				Title:       "High Model Usage",
+				Description: fmt.Sprintf("%s is your most used model with %d calls. Ensure you're getting the best value", mostUsed.Model, mostUsed.CallCount),
+				Severity:    "info",
+			})
+		}
+	}
+
+	// Insight 7: Token efficiency
+	if len(modelUsage) > 0 {
+		for _, usage := range modelUsage {
+			if usage.CallCount > 0 {
+				avgTokensPerCall := float64(usage.TotalTokens) / float64(usage.CallCount)
+				if avgTokensPerCall > 2000 {
+					insights = append(insights, Insight{
+						Type:        "info",
+						Category:    "efficiency",
+						Title:       "High Token Usage",
+						Description: fmt.Sprintf("%s averages %.0f tokens per call. Consider prompt optimization", usage.Model, avgTokensPerCall),
+						Severity:    "low",
+					})
+					break // Only show one token efficiency insight
+				}
+			}
+		}
+	}
+
+	// Insight 8: Model diversity
+	if len(modelUsage) == 1 && modelUsage[0].CallCount > 50 {
+		insights = append(insights, Insight{
+			Type:        "info",
+			Category:    "optimization",
+			Title:       "Single Model Usage",
+			Description: fmt.Sprintf("You're only using %s. Consider testing other models for cost/performance optimization", modelUsage[0].Model),
+			Severity:    "low",
+		})
+	} else if len(modelUsage) >= 3 {
+		insights = append(insights, Insight{
+			Type:        "success",
+			Category:    "optimization",
+			Title:       "Good Model Diversity",
+			Description: fmt.Sprintf("Using %d different models - great job optimizing for different use cases!", len(modelUsage)),
+			Severity:    "info",
+		})
+	}
+
 	return insights
 }
 
@@ -277,38 +336,38 @@ func (s *AnalyticsService) GetModelComparison(ctx context.Context, orgID, projec
 
 // DashboardSummary contains all data for the main dashboard
 type DashboardSummary struct {
-	TimeRange     string                    `json:"time_range"`
-	StartTime     time.Time                 `json:"start_time"`
-	EndTime       time.Time                 `json:"end_time"`
-	MetricSummary *models.MetricSummary     `json:"metric_summary"`
-	CostBreakdown []*models.CostBreakdown   `json:"cost_breakdown"`
-	ModelUsage    []*models.ModelUsage      `json:"model_usage"`
-	Insights      []Insight                 `json:"insights"`
+	TimeRange     string                  `json:"time_range"`
+	StartTime     time.Time               `json:"start_time"`
+	EndTime       time.Time               `json:"end_time"`
+	MetricSummary *models.MetricSummary   `json:"metric_summary"`
+	CostBreakdown []*models.CostBreakdown `json:"cost_breakdown"`
+	ModelUsage    []*models.ModelUsage    `json:"model_usage"`
+	Insights      []Insight               `json:"insights"`
 }
 
 // Insight represents an actionable insight
 type Insight struct {
-	Type        string `json:"type"`        // success, info, warning, error
-	Category    string `json:"category"`    // cost, performance, reliability
+	Type        string `json:"type"`     // success, info, warning, error
+	Category    string `json:"category"` // cost, performance, reliability
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Severity    string `json:"severity"`    // info, low, medium, high, critical
+	Severity    string `json:"severity"` // info, low, medium, high, critical
 }
 
 // CostAnalysis contains detailed cost information
 type CostAnalysis struct {
-	TotalCost          float64                   `json:"total_cost"`
-	DailyAverage       float64                   `json:"daily_average"`
-	MonthlyProjection  float64                   `json:"monthly_projection"`
-	CostBreakdown      []*models.CostBreakdown   `json:"cost_breakdown"`
-	MostExpensiveModel string                    `json:"most_expensive_model"`
-	HighestCost        float64                   `json:"highest_cost"`
+	TotalCost          float64                 `json:"total_cost"`
+	DailyAverage       float64                 `json:"daily_average"`
+	MonthlyProjection  float64                 `json:"monthly_projection"`
+	CostBreakdown      []*models.CostBreakdown `json:"cost_breakdown"`
+	MostExpensiveModel string                  `json:"most_expensive_model"`
+	HighestCost        float64                 `json:"highest_cost"`
 }
 
 // PerformanceMetrics contains performance analysis
 type PerformanceMetrics struct {
 	Summary        *models.MetricSummary `json:"summary"`
-	Status         string                `json:"status"`         // excellent, good, fair, poor
+	Status         string                `json:"status"` // excellent, good, fair, poor
 	Recommendation string                `json:"recommendation"`
 }
 

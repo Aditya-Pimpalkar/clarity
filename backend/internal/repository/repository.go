@@ -18,7 +18,8 @@ type Repository interface {
 
 	// Span operations
 	SaveSpan(ctx context.Context, span *models.Span) error
-	GetSpansByTraceID(ctx context.Context, traceID string) ([]*models.Span, error)
+	//GetSpansByTraceID(ctx context.Context, traceID string) ([]*models.Span, error)
+	GetSpansByTraceID(ctx context.Context, traceID string) ([]models.Span, error)
 
 	// Metrics operations
 	SaveMetric(ctx context.Context, metric *models.Metric) error
