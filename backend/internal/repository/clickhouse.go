@@ -16,6 +16,18 @@ type ClickHouseRepository struct {
 	db *sql.DB
 }
 
+// formatTimeForClickHouse converts time to ClickHouse compatible format
+func formatTimeForClickHouse(timeStr string) string {
+	// Try to parse as RFC3339
+	t, err := time.Parse(time.RFC3339, timeStr)
+	if err != nil {
+		// If parsing fails, return as-is
+		return timeStr
+	}
+	// Convert to UTC and format for ClickHouse (without timezone)
+	return t.UTC().Format("2006-01-02 15:04:05")
+}
+
 // NewClickHouseRepository creates a new ClickHouse repository
 func NewClickHouseRepository(dsn string) (*ClickHouseRepository, error) {
 	// Open connection to ClickHouse
@@ -298,12 +310,12 @@ func (r *ClickHouseRepository) GetTraces(ctx context.Context, query *models.Trac
 
 	if query.StartTime != "" {
 		whereClause += " AND timestamp >= ?"
-		args = append(args, query.StartTime)
+		args = append(args, formatTimeForClickHouse(query.StartTime))
 	}
 
 	if query.EndTime != "" {
 		whereClause += " AND timestamp <= ?"
-		args = append(args, query.EndTime)
+		args = append(args, formatTimeForClickHouse(query.EndTime))
 	}
 
 	if query.Model != "" {
@@ -400,12 +412,12 @@ func (r *ClickHouseRepository) GetTraceCount(ctx context.Context, query *models.
 
 	if query.StartTime != "" {
 		whereClause += " AND timestamp >= ?"
-		args = append(args, query.StartTime)
+		args = append(args, formatTimeForClickHouse(query.StartTime))
 	}
 
 	if query.EndTime != "" {
 		whereClause += " AND timestamp <= ?"
-		args = append(args, query.EndTime)
+		args = append(args, formatTimeForClickHouse(query.EndTime))
 	}
 
 	sqlQuery := fmt.Sprintf(`
