@@ -43,6 +43,16 @@ func BadRequestResponse(c *fiber.Ctx, message string) error {
 	return ErrorResponse(c, fiber.StatusBadRequest, message, nil)
 }
 
+// UnauthorizedResponse sends a 401 Unauthorized response
+func UnauthorizedResponse(c *fiber.Ctx, message string) error {
+	return ErrorResponse(c, fiber.StatusUnauthorized, message, nil)
+}
+
+// ForbiddenResponse sends a 403 Forbidden response
+func ForbiddenResponse(c *fiber.Ctx, message string) error {
+	return ErrorResponse(c, fiber.StatusForbidden, message, nil)
+}
+
 // NotFoundResponse sends a 404 Not Found response
 func NotFoundResponse(c *fiber.Ctx, message string) error {
 	return ErrorResponse(c, fiber.StatusNotFound, message, nil)
@@ -74,5 +84,6 @@ func BindJSON(c *fiber.Ctx, v interface{}) error {
 	if err := c.BodyParser(v); err != nil {
 		return err
 	}
+	// You can add validation here using go-playground/validator
 	return nil
 }
