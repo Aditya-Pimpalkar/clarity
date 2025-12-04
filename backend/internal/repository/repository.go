@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/sahared/llm-observability/internal/models"
@@ -18,7 +19,6 @@ type Repository interface {
 
 	// Span operations
 	SaveSpan(ctx context.Context, span *models.Span) error
-	//GetSpansByTraceID(ctx context.Context, traceID string) ([]*models.Span, error)
 	GetSpansByTraceID(ctx context.Context, traceID string) ([]models.Span, error)
 
 	// Metrics operations
@@ -43,6 +43,9 @@ type Repository interface {
 	CreateProject(ctx context.Context, project *models.Project) error
 	GetProject(ctx context.Context, projectID string) (*models.Project, error)
 	GetProjectsByOrg(ctx context.Context, orgID string) ([]*models.Project, error)
+
+	// Raw query operations (for analytics)
+	Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 
 	// Health check
 	Ping(ctx context.Context) error

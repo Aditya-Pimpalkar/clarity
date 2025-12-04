@@ -26,7 +26,7 @@ import {
 import api from '../services/api'
 import { formatCurrency, formatNumber, formatDuration } from '../lib/utils'
 
-interface DashboardStats {
+interface DashboardData {
   total_traces: number
   total_cost: number
   total_tokens: number
@@ -39,11 +39,25 @@ interface DashboardStats {
     tokens: number
     latency: number
   }
+  top_models: Array<{
+    model: string
+    count: number
+    cost: number
+  }>
+  cost_by_day: Array<{
+    date: string
+    cost: number
+  }>
+  traces_by_status: Array<{
+    status: string
+    count: number
+  }>
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState('24h')
 
   useEffect(() => {
@@ -52,26 +66,14 @@ export default function DashboardPage() {
 
   const loadDashboardData = async () => {
     setLoading(true)
+    setError(null)
     try {
       const response = await api.getDashboard(timeRange)
-      setStats(response.data)
-    } catch (error) {
-      console.error('Failed to load dashboard:', error)
-      // Use mock data if API fails
-      setStats({
-        total_traces: 64,
-        total_cost: 0.15,
-        total_tokens: 12847,
-        avg_latency: 156,
-        error_rate: 3.1,
-        success_rate: 96.9,
-        trends: {
-          traces: 12.5,
-          cost: 8.3,
-          tokens: 15.2,
-          latency: -4.7,
-        },
-      })
+      console.log('Dashboard response:', response)
+      setData(response.data)
+    } catch (err: any) {
+      console.error('Failed to load dashboard:', err)
+      setError(err.message || 'Failed to load dashboard data')
     } finally {
       setLoading(false)
     }
@@ -88,7 +90,34 @@ export default function DashboardPage() {
     )
   }
 
-  if (!stats) return null
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-lg font-medium">Failed to load dashboard</p>
+          <p className="text-sm text-muted-foreground mt-2">{error}</p>
+          <button
+            onClick={loadDashboardData}
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">No data available</p>
+        </div>
+      </div>
+    )
+  }
 
   const getTrendIcon = (value: number) => {
     if (value > 0) return <TrendingUp className="h-4 w-4 text-green-600" />
@@ -102,29 +131,19 @@ export default function DashboardPage() {
     return 'text-gray-600'
   }
 
-  // Sample data for charts (we'll make this dynamic later)
-  const costByDay = [
-    { date: 'Mon', cost: 0.023 },
-    { date: 'Tue', cost: 0.031 },
-    { date: 'Wed', cost: 0.028 },
-    { date: 'Thu', cost: 0.035 },
-    { date: 'Fri', cost: 0.029 },
-    { date: 'Sat', cost: 0.019 },
-    { date: 'Sun', cost: 0.015 },
-  ]
+  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
 
-  const modelDistribution = [
-    { name: 'GPT-4', value: 45, cost: 0.089 },
-    { name: 'GPT-3.5', value: 12, cost: 0.002 },
-    { name: 'Claude-3', value: 7, cost: 0.059 },
-  ]
-
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
+  // Safely transform data for pie chart
+  const pieData = (data.top_models || []).map(m => ({
+    name: m.model,
+    value: m.count,
+    cost: m.cost,
+  }))
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-2">
@@ -159,13 +178,13 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(stats.total_traces)}</div>
+            <div className="text-2xl font-bold">{formatNumber(data.total_traces)}</div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              {getTrendIcon(stats.trends.traces)}
-              <span className={getTrendColor(stats.trends.traces)}>
-                {Math.abs(stats.trends.traces)}%
+              {getTrendIcon(data.trends.traces)}
+              <span className={getTrendColor(data.trends.traces)}>
+                {Math.abs(data.trends.traces).toFixed(1)}%
               </span>
-              <span>from last period</span>
+              <span>from previous period</span>
             </div>
           </CardContent>
         </Card>
@@ -177,13 +196,13 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.total_cost)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(data.total_cost)}</div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              {getTrendIcon(stats.trends.cost)}
-              <span className={getTrendColor(stats.trends.cost)}>
-                {Math.abs(stats.trends.cost)}%
+              {getTrendIcon(data.trends.cost)}
+              <span className={getTrendColor(data.trends.cost)}>
+                {Math.abs(data.trends.cost).toFixed(1)}%
               </span>
-              <span>from last period</span>
+              <span>from previous period</span>
             </div>
           </CardContent>
         </Card>
@@ -195,13 +214,13 @@ export default function DashboardPage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatDuration(stats.avg_latency)}</div>
+            <div className="text-2xl font-bold">{formatDuration(data.avg_latency)}</div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              {getTrendIcon(stats.trends.latency)}
-              <span className={getTrendColor(stats.trends.latency)}>
-                {Math.abs(stats.trends.latency)}%
+              {getTrendIcon(data.trends.latency)}
+              <span className={getTrendColor(data.trends.latency)}>
+                {Math.abs(data.trends.latency).toFixed(1)}%
               </span>
-              <span>from last period</span>
+              <span>from previous period</span>
             </div>
           </CardContent>
         </Card>
@@ -213,10 +232,12 @@ export default function DashboardPage() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.success_rate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold">{data.success_rate.toFixed(1)}%</div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              <Zap className="h-3 w-3" />
-              <span>{stats.total_traces - Math.floor(stats.total_traces * stats.error_rate / 100)} successful</span>
+              <Zap className="h-3 w-3 text-green-600" />
+              <span className="text-green-600">
+                {data.total_traces - Math.floor(data.total_traces * data.error_rate / 100)} successful
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -230,24 +251,46 @@ export default function DashboardPage() {
             <CardTitle>Cost Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={costByDay}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="cost"
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  name="Cost (USD)"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {data.cost_by_day && data.cost_by_day.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={data.cost_by_day}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => {
+                      const date = new Date(value)
+                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    }}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    labelFormatter={(label) => {
+                      const date = new Date(label)
+                      return date.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        year: 'numeric'
+                      })
+                    }}
+                  />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="cost"
+                    stroke="#3B82F6"
+                    strokeWidth={2}
+                    name="Cost (USD)"
+                    dot={{ fill: '#3B82F6', r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-72 flex items-center justify-center text-muted-foreground">
+                No cost data available
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -257,69 +300,79 @@ export default function DashboardPage() {
             <CardTitle>Model Usage</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={modelDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => {
-                    const percent = entry.percent || 0
-                    return `${entry.name} ${(percent * 100).toFixed(0)}%`
-                  }}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {modelDistribution.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {pieData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => {
+                      const percent = entry.percent || 0
+                      return `${entry.name} ${(percent * 100).toFixed(0)}%`
+                    }}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {pieData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [value, 'Requests']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-72 flex items-center justify-center text-muted-foreground">
+                No model data available
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Model Comparison Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Model Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Model</th>
-                  <th className="text-right p-2">Requests</th>
-                  <th className="text-right p-2">Avg Cost</th>
-                  <th className="text-right p-2">Total Cost</th>
-                  <th className="text-right p-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {modelDistribution.map((model) => (
-                  <tr key={model.name} className="border-b last:border-0">
-                    <td className="p-2 font-medium">{model.name}</td>
-                    <td className="text-right p-2">{model.value}</td>
-                    <td className="text-right p-2">{formatCurrency(model.cost / model.value)}</td>
-                    <td className="text-right p-2">{formatCurrency(model.cost)}</td>
-                    <td className="text-right p-2">
-                      <span className="inline-flex items-center gap-1 text-green-600">
-                        <CheckCircle className="h-3 w-3" />
-                        Active
-                      </span>
-                    </td>
+      {/* Model Performance Table */}
+      {data.top_models && data.top_models.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Model Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2 text-sm font-medium text-muted-foreground">Model</th>
+                    <th className="text-right p-2 text-sm font-medium text-muted-foreground">Requests</th>
+                    <th className="text-right p-2 text-sm font-medium text-muted-foreground">Total Cost</th>
+                    <th className="text-right p-2 text-sm font-medium text-muted-foreground">Avg Cost</th>
+                    <th className="text-right p-2 text-sm font-medium text-muted-foreground">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {data.top_models.map((model) => (
+                    <tr key={model.model} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="p-2 font-medium">{model.model}</td>
+                      <td className="text-right p-2">{formatNumber(model.count)}</td>
+                      <td className="text-right p-2">{formatCurrency(model.cost)}</td>
+                      <td className="text-right p-2">{formatCurrency(model.cost / model.count)}</td>
+                      <td className="text-right p-2">
+                        <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                          <CheckCircle className="h-3 w-3" />
+                          Active
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -329,9 +382,9 @@ export default function DashboardPage() {
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(stats.total_tokens)}</div>
+            <div className="text-2xl font-bold">{formatNumber(data.total_tokens)}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Across all models
+              Across all models in {timeRange}
             </p>
           </CardContent>
         </Card>
@@ -342,9 +395,9 @@ export default function DashboardPage() {
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.error_rate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold">{data.error_rate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {Math.floor(stats.total_traces * stats.error_rate / 100)} failed requests
+              {Math.floor(data.total_traces * data.error_rate / 100)} failed requests
             </p>
           </CardContent>
         </Card>
@@ -356,14 +409,48 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(stats.total_cost / stats.total_traces)}
+              {data.total_traces > 0 ? formatCurrency(data.total_cost / data.total_traces) : '$0.00'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Per successful trace
+              Per trace in {timeRange}
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Status Distribution */}
+      {data.traces_by_status && data.traces_by_status.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Trace Status Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {data.traces_by_status.map((status) => (
+                <div key={status.status} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${
+                      status.status === 'success' ? 'bg-green-500' :
+                      status.status === 'error' ? 'bg-red-500' :
+                      status.status === 'timeout' ? 'bg-yellow-500' :
+                      'bg-gray-500'
+                    }`} />
+                    <span className="text-sm font-medium capitalize">{status.status}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">
+                      {status.count} traces
+                    </span>
+                    <span className="text-sm font-medium">
+                      {((status.count / data.total_traces) * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

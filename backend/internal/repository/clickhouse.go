@@ -434,3 +434,9 @@ func (r *ClickHouseRepository) GetTraceCount(ctx context.Context, query *models.
 
 	return count, nil
 }
+
+// Query executes a query that returns multiple rows
+// This is used by analytics service for custom queries
+func (r *ClickHouseRepository) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	return r.db.QueryContext(ctx, query, args...)
+}

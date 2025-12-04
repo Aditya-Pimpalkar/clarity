@@ -30,6 +30,7 @@ func CORSConfig() fiber.Handler {
 			"Accept",
 			"Authorization",
 			"X-Request-ID",
+			"X-API-Key", // ADD THIS!
 		}, ","),
 		AllowCredentials: true,
 		ExposeHeaders: strings.Join([]string{

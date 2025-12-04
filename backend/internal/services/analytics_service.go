@@ -21,6 +21,10 @@ func NewAnalyticsService(repo repository.Repository) *AnalyticsService {
 	}
 }
 
+// ============================================================================
+// ORIGINAL METHODS (Keep these - they work with your existing repository)
+// ============================================================================
+
 // GetDashboardSummary returns a comprehensive dashboard summary
 func (s *AnalyticsService) GetDashboardSummary(ctx context.Context, orgID, projectID string, timeRange string) (*DashboardSummary, error) {
 	// Validate inputs
@@ -332,7 +336,427 @@ func (s *AnalyticsService) GetModelComparison(ctx context.Context, orgID, projec
 	return comparisons, nil
 }
 
-// Supporting types for analytics
+// ============================================================================
+// NEW DASHBOARD METHOD (For frontend dashboard API)
+// ============================================================================
+
+// GetDashboard returns dashboard stats matching frontend expectations
+func (s *AnalyticsService) GetDashboard(ctx context.Context, timeRange string, orgID string) (*DashboardStats, error) {
+	// Parse time range
+	startTime, endTime, err := s.parseTimeRange(timeRange)
+	if err != nil {
+		return nil, fmt.Errorf("invalid time range: %w", err)
+	}
+
+	duration := endTime.Sub(startTime)
+
+	// Get current period stats
+	totalTraces, err := s.getTotalTraces(ctx, orgID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	totalCost, err := s.getTotalCost(ctx, orgID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	totalTokens, err := s.getTotalTokens(ctx, orgID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	avgLatency, err := s.getAvgLatency(ctx, orgID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	errorRate, successRate, err := s.getErrorRate(ctx, orgID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get previous period for trends
+	prevStart := startTime.Add(-duration)
+	prevEnd := startTime
+
+	prevTraces, _ := s.getTotalTraces(ctx, orgID, prevStart, prevEnd)
+	prevCost, _ := s.getTotalCost(ctx, orgID, prevStart, prevEnd)
+	prevTokens, _ := s.getTotalTokens(ctx, orgID, prevStart, prevEnd)
+	prevLatency, _ := s.getAvgLatency(ctx, orgID, prevStart, prevEnd)
+
+	// Calculate trends
+	trends := TrendData{
+		Traces:  calculatePercentChange(float64(prevTraces), float64(totalTraces)),
+		Cost:    calculatePercentChange(prevCost, totalCost),
+		Tokens:  calculatePercentChange(float64(prevTokens), float64(totalTokens)),
+		Latency: calculatePercentChange(prevLatency, avgLatency),
+	}
+
+	// Get top models
+	topModels, err := s.getTopModels(ctx, orgID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get cost by day
+	costByDay, err := s.getCostByDay(ctx, orgID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get traces by status
+	tracesByStatus, err := s.getTracesByStatus(ctx, orgID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DashboardStats{
+		TotalTraces:    totalTraces,
+		TotalCost:      totalCost,
+		TotalTokens:    totalTokens,
+		AvgLatency:     avgLatency,
+		ErrorRate:      errorRate,
+		SuccessRate:    successRate,
+		Trends:         trends,
+		TopModels:      topModels,
+		CostByDay:      costByDay,
+		TracesByStatus: tracesByStatus,
+	}, nil
+}
+
+// ============================================================================
+// HELPER METHODS FOR DASHBOARD
+// ============================================================================
+
+func (s *AnalyticsService) getTotalTraces(ctx context.Context, orgID string, start, end time.Time) (int64, error) {
+	query := `
+		SELECT count() as total
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+	`
+
+	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	var total int64
+	if rows.Next() {
+		if err := rows.Scan(&total); err != nil {
+			return 0, err
+		}
+	}
+	return total, nil
+}
+
+func (s *AnalyticsService) getTotalCost(ctx context.Context, orgID string, start, end time.Time) (float64, error) {
+	query := `
+		SELECT sum(total_cost_usd) as total_cost
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+	`
+
+	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	var totalCost float64
+	if rows.Next() {
+		if err := rows.Scan(&totalCost); err != nil {
+			return 0, err
+		}
+	}
+	return totalCost, nil
+}
+
+func (s *AnalyticsService) getTotalTokens(ctx context.Context, orgID string, start, end time.Time) (int64, error) {
+	query := `
+		SELECT sum(total_tokens) as total_tokens
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+	`
+
+	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	var totalTokens int64
+	if rows.Next() {
+		if err := rows.Scan(&totalTokens); err != nil {
+			return 0, err
+		}
+	}
+	return totalTokens, nil
+}
+
+// func (s *AnalyticsService) getAvgLatency(ctx context.Context, orgID string, start, end time.Time) (float64, error) {
+// 	query := `
+// 		SELECT avg(duration_ms) as avg_latency
+// 		FROM llm_observability.traces
+// 		WHERE organization_id = ?
+// 		AND timestamp >= ?
+// 		AND timestamp < ?
+// 	`
+
+// 	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	defer rows.Close()
+
+// 	var avgLatency float64
+// 	if rows.Next() {
+// 		if err := rows.Scan(&avgLatency); err != nil {
+// 			return 0, err
+// 		}
+// 	}
+// 	return avgLatency, nil
+// }
+
+func (s *AnalyticsService) getAvgLatency(ctx context.Context, orgID string, start, end time.Time) (float64, error) {
+	query := `
+		SELECT 
+			count() as trace_count,
+			avg(duration_ms) as avg_latency
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+	`
+
+	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	var traceCount int64
+	var avgLatency float64
+	if rows.Next() {
+		if err := rows.Scan(&traceCount, &avgLatency); err != nil {
+			return 0, err
+		}
+	}
+
+	// If no traces, return 0
+	if traceCount == 0 {
+		return 0, nil
+	}
+
+	return avgLatency, nil
+}
+
+// func (s *AnalyticsService) getErrorRate(ctx context.Context, orgID string, start, end time.Time) (float64, float64, error) {
+// 	query := `
+// 		SELECT
+// 			countIf(status = 'error') * 100.0 / count() as error_rate,
+// 			countIf(status = 'success') * 100.0 / count() as success_rate
+// 		FROM llm_observability.traces
+// 		WHERE organization_id = ?
+// 		AND timestamp >= ?
+// 		AND timestamp < ?
+// 	`
+
+// 	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+// 	if err != nil {
+// 		return 0, 0, err
+// 	}
+// 	defer rows.Close()
+
+// 	var errorRate, successRate float64
+// 	if rows.Next() {
+// 		if err := rows.Scan(&errorRate, &successRate); err != nil {
+// 			return 0, 0, err
+// 		}
+// 	}
+// 	return errorRate, successRate, nil
+// }
+
+func (s *AnalyticsService) getErrorRate(ctx context.Context, orgID string, start, end time.Time) (float64, float64, error) {
+	query := `
+		SELECT 
+			count() as total_count
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+	`
+
+	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer rows.Close()
+
+	var totalCount int64
+	if rows.Next() {
+		if err := rows.Scan(&totalCount); err != nil {
+			return 0, 0, err
+		}
+	}
+
+	// If no traces, return 0% for both
+	if totalCount == 0 {
+		return 0.0, 0.0, nil
+	}
+
+	// Now get error and success counts
+	query2 := `
+		SELECT 
+			countIf(status = 'error') as errors,
+			countIf(status = 'success') as successes
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+	`
+
+	rows2, err := s.repo.Query(ctx, query2, orgID, start, end)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer rows2.Close()
+
+	var errorCount, successCount int64
+	if rows2.Next() {
+		if err := rows2.Scan(&errorCount, &successCount); err != nil {
+			return 0, 0, err
+		}
+	}
+
+	errorRate := (float64(errorCount) / float64(totalCount)) * 100.0
+	successRate := (float64(successCount) / float64(totalCount)) * 100.0
+
+	return errorRate, successRate, nil
+}
+
+func calculatePercentChange(old, new float64) float64 {
+	if old == 0 {
+		if new > 0 {
+			return 100.0
+		}
+		return 0.0
+	}
+	change := ((new - old) / old) * 100.0
+	// Prevent NaN and Inf
+	if change != change || change > 1000000 || change < -1000000 {
+		return 0.0
+	}
+	return change
+}
+
+func (s *AnalyticsService) getTopModels(ctx context.Context, orgID string, start, end time.Time) ([]ModelStats, error) {
+	query := `
+		SELECT 
+			model,
+			count() as count,
+			sum(total_cost_usd) as total_cost
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+		GROUP BY model
+		ORDER BY count DESC
+		LIMIT 10
+	`
+
+	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var models []ModelStats
+	for rows.Next() {
+		var m ModelStats
+		if err := rows.Scan(&m.Model, &m.Count, &m.Cost); err != nil {
+			return nil, err
+		}
+		models = append(models, m)
+	}
+
+	return models, nil
+}
+
+func (s *AnalyticsService) getCostByDay(ctx context.Context, orgID string, start, end time.Time) ([]DailyCost, error) {
+	query := `
+		SELECT 
+			toDate(timestamp) as date,
+			sum(total_cost_usd) as cost
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+		GROUP BY date
+		ORDER BY date ASC
+	`
+
+	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var costs []DailyCost
+	for rows.Next() {
+		var c DailyCost
+		var date time.Time
+		if err := rows.Scan(&date, &c.Cost); err != nil {
+			return nil, err
+		}
+		c.Date = date.Format("2006-01-02")
+		costs = append(costs, c)
+	}
+
+	return costs, nil
+}
+
+func (s *AnalyticsService) getTracesByStatus(ctx context.Context, orgID string, start, end time.Time) ([]StatusCount, error) {
+	query := `
+		SELECT 
+			status,
+			count() as count
+		FROM llm_observability.traces
+		WHERE organization_id = ?
+		AND timestamp >= ?
+		AND timestamp < ?
+		GROUP BY status
+		ORDER BY count DESC
+	`
+
+	rows, err := s.repo.Query(ctx, query, orgID, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var statuses []StatusCount
+	for rows.Next() {
+		var s StatusCount
+		if err := rows.Scan(&s.Status, &s.Count); err != nil {
+			return nil, err
+		}
+		statuses = append(statuses, s)
+	}
+
+	return statuses, nil
+}
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
 
 // DashboardSummary contains all data for the main dashboard
 type DashboardSummary struct {
@@ -380,4 +804,41 @@ type ModelComparison struct {
 	AvgLatency          float64 `json:"avg_latency"`
 	AvgTokensPerRequest float64 `json:"avg_tokens_per_request"`
 	EfficiencyScore     float64 `json:"efficiency_score"` // Lower is better
+}
+
+// DashboardStats types for new dashboard API response
+type DashboardStats struct {
+	TotalTraces    int64         `json:"total_traces"`
+	TotalCost      float64       `json:"total_cost"`
+	TotalTokens    int64         `json:"total_tokens"`
+	AvgLatency     float64       `json:"avg_latency"`
+	ErrorRate      float64       `json:"error_rate"`
+	SuccessRate    float64       `json:"success_rate"`
+	Trends         TrendData     `json:"trends"`
+	TopModels      []ModelStats  `json:"top_models"`
+	CostByDay      []DailyCost   `json:"cost_by_day"`
+	TracesByStatus []StatusCount `json:"traces_by_status"`
+}
+
+type TrendData struct {
+	Traces  float64 `json:"traces"`
+	Cost    float64 `json:"cost"`
+	Tokens  float64 `json:"tokens"`
+	Latency float64 `json:"latency"`
+}
+
+type ModelStats struct {
+	Model string  `json:"model"`
+	Count int64   `json:"count"`
+	Cost  float64 `json:"cost"`
+}
+
+type DailyCost struct {
+	Date string  `json:"date"`
+	Cost float64 `json:"cost"`
+}
+
+type StatusCount struct {
+	Status string `json:"status"`
+	Count  int64  `json:"count"`
 }

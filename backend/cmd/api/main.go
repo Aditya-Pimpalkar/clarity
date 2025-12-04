@@ -167,8 +167,8 @@ func setupRoutes(app *fiber.App, repo repository.Repository, config Config) {
 	// Public routes (no authentication)
 	setupPublicRoutes(app, healthHandler, authHandler)
 
-	// API key routes (SDK ingestion)
-	setupAPIKeyRoutes(app, traceHandler)
+	// API key routes (SDK ingestion + analytics)
+	setupAPIKeyRoutes(app, traceHandler, analyticsHandler)
 
 	// JWT routes (dashboard)
 	setupAuthenticatedRoutes(app, traceHandler, analyticsHandler, userService)
@@ -207,7 +207,7 @@ func setupPublicRoutes(app *fiber.App, healthHandler *api.HealthHandler, authHan
 }
 
 // setupAPIKeyRoutes configures API key protected routes
-func setupAPIKeyRoutes(app *fiber.App, traceHandler *api.TraceHandler) {
+func setupAPIKeyRoutes(app *fiber.App, traceHandler *api.TraceHandler, analyticsHandler *api.AnalyticsHandler) {
 	apiKey := app.Group("/api/v1",
 		middleware.APIKeyAuth(),
 		middleware.APIKeyRateLimiter(),
@@ -216,6 +216,17 @@ func setupAPIKeyRoutes(app *fiber.App, traceHandler *api.TraceHandler) {
 	// Trace ingestion (SDK usage)
 	apiKey.Post("/traces", traceHandler.CreateTrace)
 	apiKey.Post("/traces/batch", traceHandler.CreateTraceBatch)
+
+	// Analytics (also accessible via API key for programmatic access)
+	analytics := apiKey.Group("/analytics")
+	analytics.Get("/dashboard", analyticsHandler.GetDashboard)
+	analytics.Get("/costs", analyticsHandler.GetCostAnalysis)
+	analytics.Get("/performance", analyticsHandler.GetPerformanceMetrics)
+	analytics.Get("/models", analyticsHandler.GetModelComparison)
+
+	// ADD THESE LINES - Trace reading (for frontend)
+	apiKey.Get("/traces", traceHandler.ListTraces)
+	apiKey.Get("/traces/:id", traceHandler.GetTrace)
 }
 
 // setupAuthenticatedRoutes configures JWT protected routes

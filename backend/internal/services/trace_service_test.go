@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -54,17 +55,14 @@ func (m *mockRepository) GetMetrics(ctx context.Context, query *models.MetricQue
 	return nil, nil
 }
 
-// Fix: Use time.Time instead of interface{}
 func (m *mockRepository) GetMetricSummary(ctx context.Context, orgID, projectID string, startTime, endTime time.Time) (*models.MetricSummary, error) {
 	return &models.MetricSummary{}, nil
 }
 
-// Fix: Use time.Time instead of interface{}
 func (m *mockRepository) GetCostBreakdown(ctx context.Context, orgID, projectID string, startTime, endTime time.Time) ([]*models.CostBreakdown, error) {
 	return nil, nil
 }
 
-// Fix: Use time.Time instead of interface{}
 func (m *mockRepository) GetModelUsage(ctx context.Context, orgID, projectID string, startTime, endTime time.Time) ([]*models.ModelUsage, error) {
 	return nil, nil
 }
@@ -98,6 +96,10 @@ func (m *mockRepository) GetProject(ctx context.Context, projectID string) (*mod
 }
 
 func (m *mockRepository) GetProjectsByOrg(ctx context.Context, orgID string) ([]*models.Project, error) {
+	return nil, nil
+}
+
+func (m *mockRepository) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	return nil, nil
 }
 
