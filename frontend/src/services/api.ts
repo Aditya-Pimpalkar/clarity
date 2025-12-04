@@ -17,7 +17,7 @@ class ApiClient {
     })
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, _password: string) {
     // Mock login - doesn't call backend
     return {
       data: {
