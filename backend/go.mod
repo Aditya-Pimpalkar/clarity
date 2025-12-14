@@ -1,4 +1,4 @@
-module github.com/sahared/llm-observability
+module github.com/Aditya-Pimpalkar/clarity
 
 go 1.25.3
 

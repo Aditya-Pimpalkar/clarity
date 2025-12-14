@@ -14,10 +14,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
 
-	"github.com/sahared/llm-observability/internal/api"
-	"github.com/sahared/llm-observability/internal/middleware"
-	"github.com/sahared/llm-observability/internal/repository"
-	"github.com/sahared/llm-observability/internal/services"
+	"github.com/Aditya-Pimpalkar/clarity/internal/api"
+	"github.com/Aditya-Pimpalkar/clarity/internal/middleware"
+	"github.com/Aditya-Pimpalkar/clarity/internal/repository"
+	"github.com/Aditya-Pimpalkar/clarity/internal/services"
 )
 
 func main() {

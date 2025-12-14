@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sahared/llm-observability/internal/models"
+	"github.com/Aditya-Pimpalkar/clarity/internal/models"
 )
 
 // SaveMetric saves a metric to ClickHouse

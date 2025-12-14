@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sahared/llm-observability/internal/models"
-	"github.com/sahared/llm-observability/internal/repository"
+	"github.com/Aditya-Pimpalkar/clarity/internal/models"
+	"github.com/Aditya-Pimpalkar/clarity/internal/repository"
 )
 
 // Mock repository for testing

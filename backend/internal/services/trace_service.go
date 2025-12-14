@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sahared/llm-observability/internal/models"
-	"github.com/sahared/llm-observability/internal/repository"
+	"github.com/Aditya-Pimpalkar/clarity/internal/models"
+	"github.com/Aditya-Pimpalkar/clarity/internal/repository"
 )
 
 // TraceService handles business logic for traces
@@ -34,8 +34,8 @@ func (s *TraceService) CreateTrace(ctx context.Context, req *models.TraceRequest
 
 	// Step 3: Calculate total cost and tokens from spans
 	var totalCost float64
-	var totalTokens uint32
-	var totalDuration uint32
+	var totalTokens int
+	var totalDuration int64
 
 	// Convert request spans to model spans
 	spans := make([]models.Span, len(req.Spans))
@@ -45,7 +45,7 @@ func (s *TraceService) CreateTrace(ctx context.Context, req *models.TraceRequest
 		// Calculate cost for this span
 		cost := s.calculateCost(spanReq.Model, spanReq.Provider, spanReq.PromptTokens, spanReq.CompletionTokens)
 		totalCost += cost
-		totalTokens += spanReq.PromptTokens + spanReq.CompletionTokens
+		totalTokens += int(spanReq.PromptTokens + spanReq.CompletionTokens)
 		totalDuration += spanReq.DurationMs
 
 		// Create span
@@ -78,10 +78,10 @@ func (s *TraceService) CreateTrace(ctx context.Context, req *models.TraceRequest
 		ProjectID:      req.ProjectID,
 		Timestamp:      time.Now(),
 		TraceType:      req.TraceType,
-		DurationMs:     totalDuration,
+		DurationMs:     int64(totalDuration),
 		Status:         s.determineTraceStatus(spans),
 		TotalCostUSD:   totalCost,
-		TotalTokens:    totalTokens,
+		TotalTokens:    int(totalTokens),
 		Model:          req.Model,
 		Provider:       req.Provider,
 		UserID:         req.UserID,
@@ -142,7 +142,7 @@ func (s *TraceService) validateTraceRequest(req *models.TraceRequest) error {
 }
 
 // calculateCost calculates the cost of an LLM call based on provider pricing
-func (s *TraceService) calculateCost(model, provider string, promptTokens, completionTokens uint32) float64 {
+func (s *TraceService) calculateCost(model, provider string, promptTokens, completionTokens int) float64 {
 	// Pricing table (per 1000 tokens)
 	// These are example prices - update with real pricing
 	pricing := map[string]map[string]struct {
@@ -353,8 +353,8 @@ func (s *TraceService) GetTracesByDateRange(ctx context.Context, orgID, projectI
 	query := &models.TraceQuery{
 		OrganizationID: orgID,
 		ProjectID:      projectID,
-		StartTime:      startTime.Format(time.RFC3339),
-		EndTime:        endTime.Format(time.RFC3339),
+		StartTime:      startTime,
+		EndTime:        endTime,
 		Limit:          limit,
 		Offset:         offset,
 	}

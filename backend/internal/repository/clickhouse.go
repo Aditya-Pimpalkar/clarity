@@ -8,7 +8,7 @@ import (
 	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/sahared/llm-observability/internal/models"
+	"github.com/Aditya-Pimpalkar/clarity/internal/models"
 )
 
 // ClickHouseRepository implements Repository interface for ClickHouse
@@ -17,14 +17,7 @@ type ClickHouseRepository struct {
 }
 
 // formatTimeForClickHouse converts time to ClickHouse compatible format
-func formatTimeForClickHouse(timeStr string) string {
-	// Try to parse as RFC3339
-	t, err := time.Parse(time.RFC3339, timeStr)
-	if err != nil {
-		// If parsing fails, return as-is
-		return timeStr
-	}
-	// Convert to UTC and format for ClickHouse (without timezone)
+func formatTimeForClickHouse(t time.Time) string {
 	return t.UTC().Format("2006-01-02 15:04:05")
 }
 
@@ -308,12 +301,12 @@ func (r *ClickHouseRepository) GetTraces(ctx context.Context, query *models.Trac
 		args = append(args, query.ProjectID)
 	}
 
-	if query.StartTime != "" {
+	if !query.StartTime.IsZero() {
 		whereClause += " AND timestamp >= ?"
 		args = append(args, formatTimeForClickHouse(query.StartTime))
 	}
 
-	if query.EndTime != "" {
+	if !query.EndTime.IsZero() {
 		whereClause += " AND timestamp <= ?"
 		args = append(args, formatTimeForClickHouse(query.EndTime))
 	}
@@ -410,12 +403,12 @@ func (r *ClickHouseRepository) GetTraceCount(ctx context.Context, query *models.
 		args = append(args, query.ProjectID)
 	}
 
-	if query.StartTime != "" {
+	if !query.StartTime.IsZero() {
 		whereClause += " AND timestamp >= ?"
 		args = append(args, formatTimeForClickHouse(query.StartTime))
 	}
 
-	if query.EndTime != "" {
+	if !query.EndTime.IsZero() {
 		whereClause += " AND timestamp <= ?"
 		args = append(args, formatTimeForClickHouse(query.EndTime))
 	}

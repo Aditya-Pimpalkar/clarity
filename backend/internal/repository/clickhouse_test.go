@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sahared/llm-observability/internal/models"
+	"github.com/Aditya-Pimpalkar/clarity/internal/models"
 )
 
 // getTestDSN returns the ClickHouse connection string for testing

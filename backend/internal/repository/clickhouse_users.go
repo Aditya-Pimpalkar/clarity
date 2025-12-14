@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/sahared/llm-observability/internal/models"
+	"github.com/Aditya-Pimpalkar/clarity/internal/models"
 )
 
 // CreateUser creates a new user in the database

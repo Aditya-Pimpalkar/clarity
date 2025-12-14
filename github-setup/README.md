@@ -1,9 +1,9 @@
-# ✨ Clarity
+# 🚀 LLM Observability Platform
 
-> Clear insights for intelligent systems. Production-ready observability platform for LLM-powered applications and AI agents.
+> Production-ready observability, monitoring, and debugging platform for LLM-powered applications and AI agents.
 
-[![Backend CI](https://github.com/YOUR_USERNAME/clarity/workflows/Backend%20CI/badge.svg)](https://github.com/YOUR_USERNAME/clarity/actions)
-[![Frontend CI](https://github.com/YOUR_USERNAME/clarity/workflows/Frontend%20CI/badge.svg)](https://github.com/YOUR_USERNAME/clarity/actions)
+[![Backend CI](https://github.com/YOUR_USERNAME/llm-observability/workflows/Backend%20CI/badge.svg)](https://github.com/YOUR_USERNAME/llm-observability/actions)
+[![Frontend CI](https://github.com/YOUR_USERNAME/llm-observability/workflows/Frontend%20CI/badge.svg)](https://github.com/YOUR_USERNAME/llm-observability/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
 [![Node Version](https://img.shields.io/badge/Node-18+-339933?logo=node.js)](https://nodejs.org)
@@ -12,7 +12,7 @@
 
 ## 📋 Overview
 
-**Clarity** is your comprehensive observability platform for AI systems - bringing clear insights to non-deterministic LLM applications. Track costs, performance, and reliability across OpenAI, Anthropic, Cohere, and custom models.
+**LLM Observability Platform** is a comprehensive "DataDog for AI Agents" - built to solve the unique challenges of monitoring non-deterministic LLM systems. Track costs, performance, and reliability across OpenAI, Anthropic, Cohere, and custom models.
 
 ### 🎯 The Problem
 
@@ -75,8 +75,8 @@
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/clarity.git
-cd clarity
+git clone https://github.com/YOUR_USERNAME/llm-observability.git
+cd llm-observability
 
 # 2. Start infrastructure services
 cd infrastructure
@@ -176,7 +176,7 @@ curl -X POST http://localhost:8080/api/v1/traces \
 ## 📁 Project Structure
 
 ```
-clarity/
+llm-observability/
 ├── backend/               # Go backend services
 │   ├── cmd/api/          # Application entry point
 │   ├── internal/         # Private application code
@@ -279,8 +279,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 📞 Contact
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/YOUR_USERNAME/clarity/issues)
-- **Discussions**: [Join the conversation](https://github.com/YOUR_USERNAME/clarity/discussions)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/YOUR_USERNAME/llm-observability/issues)
+- **Discussions**: [Join the conversation](https://github.com/YOUR_USERNAME/llm-observability/discussions)
 
 ---
 
