@@ -44,8 +44,8 @@ func main() {
 		Model:          "gpt-4",
 		Provider:       "openai",
 		UserID:         "user-demo",
-		Metadata: map[string]interface{}{
-			"temperature": 0.7,
+		Metadata: map[string]string{
+			"temperature": "0.7",
 			"environment": "development",
 		},
 		Spans: []models.Span{
@@ -65,7 +65,7 @@ func main() {
 				TotalTokens:      97,
 				CostUSD:          0.0048,
 				Status:           "success",
-				Metadata:         map[string]interface{}{},
+				Metadata:         map[string]string{},
 			},
 		},
 	}
@@ -100,8 +100,8 @@ func main() {
 	query := &models.TraceQuery{
 		OrganizationID: "org-demo",
 		ProjectID:      "proj-demo",
-		StartTime:      startTime.Format("2006-01-02 15:04:05"), // ClickHouse format
-		EndTime:        endTime.Format("2006-01-02 15:04:05"),   // ClickHouse format
+		StartTime:      startTime, // ClickHouse format
+		EndTime:        endTime,   // ClickHouse format
 		Limit:          10,
 	}
 
