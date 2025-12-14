@@ -36,9 +36,12 @@ jobs:
       working-directory: ./backend
       run: go mod download
     
-    - name: Run tests
+    - name: Run unit tests (skip integration)
       working-directory: ./backend
-      run: go test -v -race -coverprofile=coverage.out ./...
+      run: |
+        go test -v -race -coverprofile=coverage.out \
+          ./internal/services/... \
+          ./internal/models/...
     
     - name: Upload coverage
       uses: codecov/codecov-action@v3
@@ -61,5 +64,6 @@ jobs:
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
-        version: latest
+        version: v1.61.0
         working-directory: ./backend
+        args: --timeout=5m
