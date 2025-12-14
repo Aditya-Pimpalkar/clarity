@@ -310,4 +310,4 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **⭐ Star this repository if you find it useful!**
 
-Made with ❤️ by [Your Name](https://github.com/YOUR_USERNAME)
+Made with ❤️ by [Aditya Pimpalkar](https://github.com/Aditya-Pimpalkar)
