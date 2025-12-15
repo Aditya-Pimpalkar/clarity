@@ -116,7 +116,7 @@ func main() {
 
 	// Test 5: Get metric summary
 	fmt.Println("\nTest 5: Get metric summary...")
-	summary, err := repo.GetMetricSummary(ctx, "org-demo", "proj-demo", 
+	// summary, err := repo.GetMetricSummary(ctx, &models.MetricQuery{OrganizationID: orgID, ProjectID: projectID, StartTime: startTime, EndTime: endTime})
 		time.Now().Add(-24*time.Hour), time.Now())
 	if err != nil {
 		log.Fatalf("Failed to get summary: %v", err)

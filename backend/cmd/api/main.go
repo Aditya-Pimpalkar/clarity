@@ -34,7 +34,7 @@ func main() {
 
 	// Connect to ClickHouse
 	log.Println("🔌 Connecting to ClickHouse...")
-	repo, err := repository.NewClickHouseRepository(config.ClickHouseDSN)
+	repo, err := repository.NewClickHouseRepository("localhost:9000")
 	if err != nil {
 		log.Fatal("❌ Failed to connect to ClickHouse:", err)
 	}
