@@ -130,54 +130,6 @@ func (r *ClickHouseRepository) SaveSpans(ctx context.Context, spans []models.Spa
     return batch.Send()
 }
 
-// GetTraceByID retrieves a trace by ID
-func (r *ClickHouseRepository) GetTraceByID(ctx context.Context, traceID string) (*models.Trace, error) {
-    var trace models.Trace
-    var metadataJSON string
-
-    query := `
-        SELECT 
-            trace_id, organization_id, project_id, timestamp,
-            trace_type, duration_ms, status, total_cost_usd,
-            total_tokens, model, provider, user_id, metadata
-        FROM traces
-        WHERE trace_id = ?
-    `
-
-    err := r.conn.QueryRow(ctx, query, traceID).Scan(
-        &trace.TraceID,
-        &trace.OrganizationID,
-        &trace.ProjectID,
-        &trace.Timestamp,
-        &trace.TraceType,
-        &trace.DurationMs,
-        &trace.Status,
-        &trace.TotalCostUSD,
-        &trace.TotalTokens,
-        &trace.Model,
-        &trace.Provider,
-        &trace.UserID,
-        &metadataJSON,
-    )
-
-    if err == sql.ErrNoRows {
-        return nil, fmt.Errorf("trace not found")
-    }
-    if err != nil {
-        return nil, fmt.Errorf("failed to get trace: %w", err)
-    }
-
-    if metadataJSON != "" && metadataJSON != "{}" {
-        json.Unmarshal([]byte(metadataJSON), &trace.Metadata)
-    }
-
-    spans, err := r.GetSpansByTraceID(ctx, traceID)
-    if err == nil {
-        trace.Spans = spans
-    }
-
-    return &trace, nil
-}
 
 // GetSpansByTraceID retrieves all spans for a trace
 func (r *ClickHouseRepository) GetSpansByTraceID(ctx context.Context, traceID string) ([]models.Span, error) {
@@ -235,97 +187,7 @@ func (r *ClickHouseRepository) GetSpansByTraceID(ctx context.Context, traceID st
 }
 
 // GetTraces retrieves traces with filtering
-func (r *ClickHouseRepository) GetTraces(ctx context.Context, query *models.TraceQuery) ([]*models.Trace, error) {
-    sql := `
-        SELECT 
-            trace_id, organization_id, project_id, timestamp,
-            trace_type, duration_ms, status, total_cost_usd,
-            total_tokens, model, provider, user_id
-        FROM traces
-        WHERE organization_id = ?
-    `
 
-    args := []interface{}{query.OrganizationID}
-
-    if query.ProjectID != "" {
-        sql += " AND project_id = ?"
-        args = append(args, query.ProjectID)
-    }
-
-    if !query.StartTime.IsZero() {
-        sql += " AND timestamp >= ?"
-        args = append(args, query.StartTime)
-    }
-
-    if !query.EndTime.IsZero() {
-        sql += " AND timestamp <= ?"
-        args = append(args, query.EndTime)
-    }
-
-    if query.Status != "" {
-        sql += " AND status = ?"
-        args = append(args, query.Status)
-    }
-
-    sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
-    args = append(args, query.Limit, query.Offset)
-
-    rows, err := r.conn.Query(ctx, sql, args...)
-    if err != nil {
-        return nil, fmt.Errorf("failed to query traces: %w", err)
-    }
-    defer rows.Close()
-
-    var traces []*models.Trace
-    for rows.Next() {
-        var trace models.Trace
-        err := rows.Scan(
-            &trace.TraceID,
-            &trace.OrganizationID,
-            &trace.ProjectID,
-            &trace.Timestamp,
-            &trace.TraceType,
-            &trace.DurationMs,
-            &trace.Status,
-            &trace.TotalCostUSD,
-            &trace.TotalTokens,
-            &trace.Model,
-            &trace.Provider,
-            &trace.UserID,
-        )
-        if err != nil {
-            return nil, fmt.Errorf("failed to scan trace: %w", err)
-        }
-        traces = append(traces, &trace)
-    }
-
-    return traces, nil
-}
-
-// GetTraceCount returns total count for pagination
-func (r *ClickHouseRepository) GetTraceCount(ctx context.Context, query *models.TraceQuery) (int64, error) {
-    sql := "SELECT count() FROM traces WHERE organization_id = ?"
-    args := []interface{}{query.OrganizationID}
-
-    if query.ProjectID != "" {
-        sql += " AND project_id = ?"
-        args = append(args, query.ProjectID)
-    }
-
-    if !query.StartTime.IsZero() {
-        sql += " AND timestamp >= ?"
-        args = append(args, query.StartTime)
-    }
-
-    if !query.EndTime.IsZero() {
-        sql += " AND timestamp <= ?"
-        args = append(args, query.EndTime)
-    }
-
-    var count int64
-    err := r.conn.QueryRow(ctx, sql, args...).Scan(&count)
-    return count, err
-}
 
 // SaveMetric stores a metric
 func (r *ClickHouseRepository) SaveMetric(ctx context.Context, metric *models.Metric) error {
@@ -551,4 +413,159 @@ func (r *ClickHouseRepository) GetAPIKey(ctx context.Context, key string) (*mode
         }, nil
     }
     return nil, fmt.Errorf("invalid API key")
+}
+// GetTraces retrieves traces with filtering
+func (r *ClickHouseRepository) GetTraces(ctx context.Context, query *models.TraceQuery) ([]*models.Trace, error) {
+    sql := `
+        SELECT 
+            trace_id, organization_id, project_id, timestamp,
+            trace_type, duration_ms, status, total_cost_usd,
+            total_tokens, model, provider, user_id
+        FROM traces
+        WHERE organization_id = ?
+    `
+
+    args := []interface{}{query.OrganizationID}
+
+    if query.ProjectID != "" {
+        sql += " AND project_id = ?"
+        args = append(args, query.ProjectID)
+    }
+
+    if !query.StartTime.IsZero() {
+        sql += " AND timestamp >= ?"
+        args = append(args, query.StartTime)
+    }
+
+    if !query.EndTime.IsZero() {
+        sql += " AND timestamp <= ?"
+        args = append(args, query.EndTime)
+    }
+
+    if query.Status != "" {
+        sql += " AND status = ?"
+        args = append(args, query.Status)
+    }
+
+    sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+    args = append(args, query.Limit, query.Offset)
+
+    rows, err := r.conn.Query(ctx, sql, args...)
+    if err != nil {
+        return nil, fmt.Errorf("failed to query traces: %w", err)
+    }
+    defer rows.Close()
+
+    var traces []*models.Trace
+    for rows.Next() {
+        var trace models.Trace
+        var durationMs uint32
+        var totalTokens uint32
+        
+        err := rows.Scan(
+            &trace.TraceID,
+            &trace.OrganizationID,
+            &trace.ProjectID,
+            &trace.Timestamp,
+            &trace.TraceType,
+            &durationMs,
+            &trace.Status,
+            &trace.TotalCostUSD,
+            &totalTokens,
+            &trace.Model,
+            &trace.Provider,
+            &trace.UserID,
+        )
+        if err != nil {
+            return nil, fmt.Errorf("failed to scan trace: %w", err)
+        }
+        
+        // Convert types
+        trace.DurationMs = int64(durationMs)
+        trace.TotalTokens = int(totalTokens)
+        
+        traces = append(traces, &trace)
+    }
+
+    return traces, nil
+}
+
+// GetTraceByID retrieves a trace by ID
+func (r *ClickHouseRepository) GetTraceByID(ctx context.Context, traceID string) (*models.Trace, error) {
+    var trace models.Trace
+    var metadataJSON string
+    var durationMs uint32
+    var totalTokens uint32
+
+    query := `
+        SELECT 
+            trace_id, organization_id, project_id, timestamp,
+            trace_type, duration_ms, status, total_cost_usd,
+            total_tokens, model, provider, user_id, metadata
+        FROM traces
+        WHERE trace_id = ?
+    `
+
+    err := r.conn.QueryRow(ctx, query, traceID).Scan(
+        &trace.TraceID,
+        &trace.OrganizationID,
+        &trace.ProjectID,
+        &trace.Timestamp,
+        &trace.TraceType,
+        &durationMs,
+        &trace.Status,
+        &trace.TotalCostUSD,
+        &totalTokens,
+        &trace.Model,
+        &trace.Provider,
+        &trace.UserID,
+        &metadataJSON,
+    )
+
+    if err == sql.ErrNoRows {
+        return nil, fmt.Errorf("trace not found")
+    }
+    if err != nil {
+        return nil, fmt.Errorf("failed to get trace: %w", err)
+    }
+
+    // Convert types
+    trace.DurationMs = int64(durationMs)
+    trace.TotalTokens = int(totalTokens)
+
+    if metadataJSON != "" && metadataJSON != "{}" {
+        json.Unmarshal([]byte(metadataJSON), &trace.Metadata)
+    }
+
+    spans, err := r.GetSpansByTraceID(ctx, traceID)
+    if err == nil {
+        trace.Spans = spans
+    }
+
+    return &trace, nil
+}
+
+// GetTraceCount returns total count for pagination
+func (r *ClickHouseRepository) GetTraceCount(ctx context.Context, query *models.TraceQuery) (int64, error) {
+    sql := "SELECT count() FROM traces WHERE organization_id = ?"
+    args := []interface{}{query.OrganizationID}
+
+    if query.ProjectID != "" {
+        sql += " AND project_id = ?"
+        args = append(args, query.ProjectID)
+    }
+
+    if !query.StartTime.IsZero() {
+        sql += " AND timestamp >= ?"
+        args = append(args, query.StartTime)
+    }
+
+    if !query.EndTime.IsZero() {
+        sql += " AND timestamp <= ?"
+        args = append(args, query.EndTime)
+    }
+
+    var count uint64
+    err := r.conn.QueryRow(ctx, sql, args...).Scan(&count)
+    return int64(count), err
 }
