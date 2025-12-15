@@ -17,6 +17,7 @@ import (
 	"github.com/Aditya-Pimpalkar/clarity/internal/api"
 	"github.com/Aditya-Pimpalkar/clarity/internal/middleware"
 	"github.com/Aditya-Pimpalkar/clarity/internal/repository"
+	"github.com/Aditya-Pimpalkar/clarity/internal/kafka"
 	"github.com/Aditya-Pimpalkar/clarity/internal/services"
 )
 
@@ -49,6 +50,22 @@ func main() {
 	}
 	log.Println("✅ Database health check passed")
 
+	// Initialize Kafka producer (optional - continues if unavailable)
+	log.Println("🔌 Connecting to Kafka...")
+	kafkaConfig := &kafka.ProducerConfig{
+		Brokers: []string{getEnv("KAFKA_BROKERS", "localhost:9092")},
+		Topic:   getEnv("KAFKA_TOPIC", "llm-traces"),
+	}
+	
+	kafkaProducer, err := kafka.NewProducer(kafkaConfig)
+	if err != nil {
+		log.Printf("⚠️  Kafka unavailable (continuing without events): %v", err)
+		kafkaProducer = nil // Continue without Kafka
+	} else {
+		defer kafkaProducer.Close()
+		log.Println("✅ Kafka producer connected")
+	}
+
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
 		AppName:               config.AppName,
@@ -67,7 +84,7 @@ func main() {
 
 	// Setup routes
 	log.Println("🛣️  Setting up routes...")
-	setupRoutes(app, repo, config)
+	setupRoutes(app, repo, kafkaProducer, config)
 	log.Println("✅ Routes configured")
 
 	// Start server in goroutine
@@ -152,9 +169,9 @@ func setupMiddleware(app *fiber.App, config Config) {
 }
 
 // setupRoutes configures all routes with appropriate middleware
-func setupRoutes(app *fiber.App, repo repository.Repository, config Config) {
+func setupRoutes(app *fiber.App, repo repository.Repository, kafkaProducer *kafka.Producer, config Config) {
 	// Create services
-	traceService := services.NewTraceService(repo)
+	traceService := services.NewTraceService(repo, kafkaProducer)
 	analyticsService := services.NewAnalyticsService(repo)
 	userService := services.NewUserService(repo)
 

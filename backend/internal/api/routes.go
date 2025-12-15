@@ -9,7 +9,7 @@ import (
 // SetupRoutes configures all API routes
 func SetupRoutes(app *fiber.App, repo repository.Repository) {
 	// Create services
-	traceService := services.NewTraceService(repo)
+	traceService := services.NewTraceService(repo, nil)
 	analyticsService := services.NewAnalyticsService(repo)
 
 	// Create handlers
